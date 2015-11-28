@@ -1,4 +1,5 @@
 content/
+/output
 develop_server.sh
 fabfile.py
 Makefile
