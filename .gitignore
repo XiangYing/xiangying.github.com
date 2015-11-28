@@ -1,1 +1,7 @@
-_site/
+content/
+develop_server.sh
+fabfile.py
+Makefile
+pelicanconf.py
+pelicanconf.pyc
+publishconf.py
