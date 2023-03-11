@@ -7,3 +7,4 @@ pelicanconf.py
 pelicanconf.pyc
 publishconf.py
 .DS_Store
+_site
