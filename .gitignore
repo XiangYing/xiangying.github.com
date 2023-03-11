@@ -6,3 +6,4 @@ Makefile
 pelicanconf.py
 pelicanconf.pyc
 publishconf.py
+.DS_Store

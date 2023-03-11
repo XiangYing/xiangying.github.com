@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>IanX</title>
+    <description>欢迎来到我的个人站~</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 11 Mar 2023 09:57:43 +0800</pubDate>
+    <lastBuildDate>Sat, 11 Mar 2023 09:57:43 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>shell_flock互斥锁</title>
+        <description>&lt;h2 id=&quot;什么是flock&quot;&gt;什么是flock？&lt;/h2&gt;
+&lt;p&gt;man手册的解释是使用shell脚本来管理锁&lt;/p&gt;
+
+&lt;h2 id=&quot;使用场景&quot;&gt;使用场景&lt;/h2&gt;
+&lt;h3 id=&quot;参数&quot;&gt;参数&lt;/h3&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;OPTIONS
+-s, --shared
+    Obtain a shared lock, sometimes called a read lock.
+
+-x, -e, --exclusive
+    Obtain an exclusive lock, sometimes called a write lock.  This is the default.
+
+-u, --unlock
+    Drop a lock.  This is usually not required, since a lock is automatically dropped when the file is closed.  However, it may be required in  special  cases,  for  example  if  the enclosed command group may have forked a background process which should not be holding the lock.
+
+-n, --nb, --nonblock
+    Fail rather than wait if the lock cannot be immediately acquired.  See the -E option for the exit code used.
+
+-w, --wait, --timeout seconds
+    Fail  if  the lock cannot be acquired within seconds.  Decimal fractional values are allowed.  See the -E option for the exit code used. The zero number of seconds is interpreted as --nonblock.
+
+-o, --close
+    Close the file descriptor on which the lock is held before executing command .  This is useful if command spawns a child process which should not be holding the lock.
+
+-E, --conflict-exit-code number
+    The exit code used when the -n option is in use, and the conflicting lock exists, or the -w option is in use, and the timeout is reached. The default value is 1.
+
+-c, --command command
+    Pass a single command, without arguments, to the shell with -c.
+
+-h, --help
+    Print a help message.
+
+-V, --version
+    Show version number and exit.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h3 id=&quot;通过shell脚本或者命令行加锁方式实现互斥&quot;&gt;通过shell脚本或者命令行加锁方式实现互斥&lt;/h3&gt;
+&lt;h4 id=&quot;语法及实例&quot;&gt;语法及实例&lt;/h4&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;flock [options] &amp;lt;file|directory&amp;gt; &amp;lt;command&amp;gt; [command args]&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;实例
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt;flock mylockfile &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;60
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell2&amp;gt; flock &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; 4  &lt;span class=&quot;nt&quot;&gt;-w&lt;/span&gt; 1 mylockfile &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;abc&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+  4
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;flock [options] &amp;lt;file|directory&amp;gt; -c &amp;lt;command&amp;gt;&lt;/code&gt;
+    &lt;ul&gt;
+      &lt;li&gt;实例
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt;flock /tmp &lt;span class=&quot;nt&quot;&gt;-c&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;cat&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell2&amp;gt;flock &lt;span class=&quot;nt&quot;&gt;-w&lt;/span&gt; 1 /tmp &lt;span class=&quot;nt&quot;&gt;-c&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; /bin/echo &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+  1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;通过文件描述符加锁方式实现互斥&quot;&gt;通过文件描述符加锁方式实现互斥&lt;/h3&gt;
+&lt;h4 id=&quot;语法及实例-1&quot;&gt;语法及实例&lt;/h4&gt;
+&lt;ul&gt;
+  &lt;li&gt;flock [options] &lt;file descriptor=&quot;&quot; number=&quot;&quot;&gt;
+&lt;/file&gt;    &lt;ul&gt;
+      &lt;li&gt;实例1
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt;cat test1.sh
+  &lt;span class=&quot;c&quot;&gt;#/bin/bash&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
+   flock &lt;span class=&quot;nt&quot;&gt;-n&lt;/span&gt; 9 &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exit &lt;/span&gt;1
+   &lt;span class=&quot;c&quot;&gt;# ... commands executed under lock ...&lt;/span&gt;
+   &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;20
+  &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; 9&amp;gt;mylockfile
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt;./test1.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell2&amp;gt;./test1.sh
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+  1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+        &lt;blockquote&gt;
+          &lt;p&gt;解释一下：
+  9&amp;gt;”$LOCK_FILE”  表示创建文件描述符9，指向锁文件，为何是9?8其实也是可以的，只是为了和当前脚本可能打开的文件描述符冲突(例如和0,1,2冲突)。
+  flock -n 99 尝试对该文件描述符加锁&lt;/p&gt;
+        &lt;/blockquote&gt;
+      &lt;/li&gt;
+      &lt;li&gt;实例2
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt; &lt;span class=&quot;nb&quot;&gt;cat &lt;/span&gt;test2.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+
+  &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;FLOCKER&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec env &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;FLOCKER&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; flock &lt;span class=&quot;nt&quot;&gt;-en&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; 4  &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; :
+  &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;20
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+
+        &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell1&amp;gt;./test2.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+        &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  shell2&amp;gt; ./test2.sh&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt;
+  4
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+        &lt;blockquote&gt;
+          &lt;p&gt;解释：这是flock的man手册中的例子，如果${FLOCKER}环境变量没有设置，则尝试将脚本本身加锁，如果加锁成功，则运行当前脚本，(并且带上原有的参数)，否则的话静默退出。&lt;/p&gt;
+        &lt;/blockquote&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;互斥任务实践&quot;&gt;互斥任务实践&lt;/h2&gt;
+&lt;h3 id=&quot;背景&quot;&gt;背景&lt;/h3&gt;
+&lt;p&gt;由于业务脚本只能串行执行，为此通过引入flock工具可以很好的保证某一个脚本同一时刻有且只能有一个实例在执行。具体如下：&lt;/p&gt;
+
+&lt;h3 id=&quot;改造样例&quot;&gt;改造样例&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;在服务器分别创建如下三个脚本
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;c&quot;&gt;# merge_script.sh&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;FLOCKER&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec env &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;FLOCKER&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; flock &lt;span class=&quot;nt&quot;&gt;-en&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$@&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; :
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;start test..&quot;&lt;/span&gt;
+  ./test1.sh
+  ./test2.sh
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;test end..&quot;&lt;/span&gt;	
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;c&quot;&gt;# test1.sh&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;start run test1..&quot;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;i &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;seq &lt;/span&gt;1 20&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;do
+  &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;1
+  &lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;c&quot;&gt;# test2.sh&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;start run test2..&quot;&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;i &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;seq &lt;/span&gt;1 10&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;do
+  &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;1
+  &lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;分别前后起两个同样的任务，内容如下：&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;div class=&quot;language-shell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &lt;span class=&quot;k&quot;&gt;while &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;true
+  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  ./merge_script.sh
+  &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$?&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-ne&lt;/span&gt; 0 &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;then
+      &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;exist merge task, wait 5s..&quot;&lt;/span&gt;
+      &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;5
+  &lt;span class=&quot;k&quot;&gt;else
+  &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;merge done&quot;&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;break
+  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi 
+  done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;观察运行过程
+在第一个任务执行完毕之前，第二个任务一直在返回输出&lt;code class=&quot;highlighter-rouge&quot;&gt;exist merge task, wait 5s..&lt;/code&gt;,直到第一个任务执行完毕，第二个任务才开始打印输出。&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Thu, 09 Mar 2023 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2023/03/shell_flock%E4%BA%92%E6%96%A5%E9%94%81/</link>
+        <guid isPermaLink="true">http://localhost:4000/2023/03/shell_flock%E4%BA%92%E6%96%A5%E9%94%81/</guid>
+        
+        <category>shell</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Jekyll环境搭建</title>
+        <description>&lt;h1 id=&quot;jekyll安装报错记录&quot;&gt;jekyll安装报错记录&lt;/h1&gt;
+
+&lt;h2 id=&quot;问题1&quot;&gt;问题1&lt;/h2&gt;
+&lt;h3 id=&quot;问题现象&quot;&gt;问题现象&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;/images/posts/jekyll/jekyll_install_error.png&quot; alt=&quot;&quot; /&gt;
+&lt;img src=&quot;/images/posts/jekyll/jekyll_install_error_log.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;解决方案&quot;&gt;解决方案&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;/images/posts/jekyll/jekyll_install_error_resolve.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;问题2&quot;&gt;问题2&lt;/h2&gt;
+&lt;h3 id=&quot;问题现象及解决&quot;&gt;问题现象及解决&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;缺少包
+&lt;img src=&quot;/images/posts/jekyll/jekyll_install_error_install.png&quot; alt=&quot;&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;包冲突
+&lt;img src=&quot;/images/posts/jekyll/jekyll_install_error_confict.png&quot; alt=&quot;&quot; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>
+        <pubDate>Thu, 09 Mar 2023 00:00:00 +0800</pubDate>
+        <link>http://localhost:4000/2023/03/macOS%E5%AE%89%E8%A3%85jekyll/</link>
+        <guid isPermaLink="true">http://localhost:4000/2023/03/macOS%E5%AE%89%E8%A3%85jekyll/</guid>
+        
+        <category>jekyll</category>
+        
+        
+      </item>
+    
+  </channel>
+</rss>

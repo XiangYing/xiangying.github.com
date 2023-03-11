@@ -1,58 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-        <meta charset="utf-8" />
-        <title>Ian's blog - Tags</title>
-        <link rel="stylesheet" href="/theme/css/main.css" />
+---
+layout: page
+title: 
+header: 根据快速导航到相应的文章
+group: navigation
+---
+{% include JB/setup %}
 
-        <!--[if IE]>
-            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-        <![endif]-->
-</head>
+<ul class="tag_box inline">
+  {% assign tags_list = site.tags %}  
+  {% include JB/tags_list %}
+</ul>
 
-<body id="index" class="home">
-        <header id="banner" class="body">
-                <h1><a href="/">Ian's blog </a></h1>
-                <nav><ul>
-                    <li><a href="/category/python.html">Python</a></li>
-                </ul></nav>
-        </header><!-- /#banner -->
+<div class = "card">
+{% for tag in site.tags %} 
 
-<section id="content" class="body">
-    <h1>Tags for Ian's blog</h1>
-    <ul>
-        <li><a href="/tag/list.html">list</a> (1)</li>
-        <li><a href="/tag/python.html">Python</a> (1)</li>
-    </ul>
-</section>
+  <h3 id="{{ tag[0] }}-ref">{{ tag[0] }}</h3>
+  <ul>
+    {% assign pages_list = tag[1] %}  
+    {% include JB/pages_list %}
+  </ul>
 
-        <section id="extras" class="body">
-                <div class="blogroll">
-                        <h2>blogroll</h2>
-                        <ul>
-                            <li><a href="http://getpelican.com/">Pelican</a></li>
-                            <li><a href="http://python.org/">Python.org</a></li>
-                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
-                            <li><a href="#">You can modify those links in your config file</a></li>
-                        </ul>
-                </div><!-- /.blogroll -->
-                <div class="social">
-                        <h2>social</h2>
-                        <ul>
 
-                            <li><a href="#">You can add links in your config file</a></li>
-                            <li><a href="#">Another social link</a></li>
-                        </ul>
-                </div><!-- /.social -->
-        </section><!-- /#extras -->
-
-        <footer id="contentinfo" class="body">
-                <address id="about" class="vcard body">
-                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
-                </address><!-- /#about -->
-
-                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
-        </footer><!-- /#contentinfo -->
-
-</body>
-</html>
+{% endfor %}
+</div>
